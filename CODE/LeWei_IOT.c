@@ -20,7 +20,7 @@ void main()
 		V_Timer_Init();
 		
 		fun_ESP8266_StartAT();
-		
+		fun_IOT_StartData();
 	}
 	else
 	{
@@ -34,5 +34,35 @@ void main()
 		GCC_CLRWDT();
 		V_fun_UART_RxData();
 		V_fun_UART_SendAT();
+		
+		//控制設備==========================
+		//使用宏定義封裝5個設備控制器
+		//收到對應的數據后，回復對應的數據
+		if(DrvUartFormat.flag.b.IsRX_getAllSensors)//獲取設備控制列表
+		{
+			DrvUartFormat.flag.b.IsRX_getAllSensors = 0;
+			GCC_DELAY(6000);//用定時器方法
+			fun_IOT_response("J1",0);//J1
+		}
+		if(DrvUartFormat.flag.b.IsRX_updateSensor)//回復更新后數據
+		{
+			DrvUartFormat.flag.b.IsRX_updateSensor = 0;
+			GCC_DELAY(6000);//用定時器方法
+			fun_IOT_response(UpdateSensorName,UpdateSensorData);//J1
+		}
+
+		//發送數據==========================
+		//定時30秒發送設備密碼
+		//定時500ms更新一次數據
+		if(AT_State == Send_Data)
+		{
+			AT_State = Send_Stop;
+			fun_IOT_StartData();//更新设备状态，使设备在线一分钟，一分钟内需要重复发送保持在线
+			while(!DrvUartFormat.flag.b.IsRX_ok)
+			{
+				V_fun_UART_RxData();
+			}
+			fun_IOT_SendData("T1",27);
+		}
 	}
 }

@@ -90,6 +90,18 @@ DEFINE_ISR(UART_ISR, 0x02C)
 		{
 			UART_RXOffset = 0;
 		}
+		if(data == 'r')//ready
+		{
+			UART_RXOffset = 0;
+		}
+		if(data == 'g')//getAllSensors
+		{
+			UART_RXOffset = 0;
+		}
+		if(data == 'p')//p1
+		{
+			UART_RXOffset = 0;
+		}
 		UART_RxBuf[UART_RXOffset] = data;
 		UART_RXOffset ++;
 		if(UART_RXOffset >= UART_LENGTH_RX)

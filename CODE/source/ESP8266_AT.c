@@ -14,20 +14,68 @@ const unsigned char UART_SendWiFi_8CIPSTART[]			="AT+CIPSTART=\"TCP\",\"tcp.lewe
 const unsigned char UART_SendWiFi_9CIPSEND[]			="AT+CIPSEND\r\n";
 const unsigned char UART_SendWiFi_10Outsend[]			="+++";
 
-const unsigned char UART_SendIOT_1StartData[] = "{\"method\": \"update\",\"gatewayNo\": \"02\",\"userkey\": \"a46950c875da40b2a8ab5ca5b0f58409\"}&^! "; // \r\n
-const unsigned char UART_SendIOT_2SendData[]  = "{\"method\": \"upload\",\"data\":[{\"Name\":\"T1\",\"Value\":\"27\"}]}&^! ";//\r\n
+const unsigned char UART_SendIOT_1StartData[] = "{\"method\": \"update\",\"gatewayNo\": \"02\",\"userkey\": \"a46950c875da40b2a8ab5ca5b0f58409\"}&^!"; // \r\n
+const unsigned char UART_SendIOT_2SendData[]  = "{\"method\": \"upload\",\"data\":[{\"Name\":\"T1\",\"Value\":\"27\"}]}&^!";//\r\n
+const unsigned char UART_SendIOT_3response[]  = "{\"method\":\"response\",\"result\":{\"successful\":true,\"message\":\"ok\",\"data\":[{\"id\":\"J1\",\"value\":\"1\"}]}}&^!";
 
-//void fun_IOT_StartData()
-//{
-//	for(i = 0; i < sizeof(UART_SendIOT_1StartData); i++)
-//	{
-//		UART_TxBuf[i] = UART_SendIOT_1StartData[i];
-//	}
-//	fun_UARTSendData(sizeof(UART_SendIOT_1StartData),0);
-//}
+void fun_IOT_StartData()
+{
+	//可傳入GatewayNo 與 userkey
+	volatile unsigned char GatewayNo = 02;
+	const unsigned char userkey[] = "a46950c875da40b2a8ab5ca5b0f58409";
+	volatile unsigned char i;
+	for(i = 0; i < sizeof(UART_SendIOT_1StartData); i++)
+	{
+		UART_TxBuf[i] = UART_SendIOT_1StartData[i];
+	}
+	UART_TxBuf[34] = GatewayNo / 10 + 0x30;
+	UART_TxBuf[35] = GatewayNo % 10 + 0x30;
+	for(i = 0; i < sizeof(userkey)-1; i++)
+	{
+		UART_TxBuf[i + 50] = userkey[i];
+	}
+	fun_UARTSendData(sizeof(UART_SendIOT_1StartData),0);
+}
 
-
-
+void fun_IOT_SendData(char *Name,unsigned char Value)
+{
+	//可傳入 Name 與 Value
+	if(sizeof(Name) <= 2)
+	{
+		if(Value <= 99)
+		{
+			volatile unsigned char i;
+			for(i = 0; i < sizeof(UART_SendIOT_2SendData); i++)
+			{
+				UART_TxBuf[i] = UART_SendIOT_2SendData[i];
+			}
+			UART_TxBuf[37] = Name[0];
+			UART_TxBuf[38] = Name[1];
+			UART_TxBuf[50] = Value / 10 + 0x30;
+			UART_TxBuf[51] = Value % 10 + 0x30;
+			fun_UARTSendData(sizeof(UART_SendIOT_2SendData),0);
+		}
+	}
+}
+void fun_IOT_response(char *Name,unsigned char Value)
+{
+	//可傳入 Name 與 Value
+	if(sizeof(Name) <= 2)
+	{
+		if(Value <= 9)
+		{
+			volatile unsigned char i;
+			for(i = 0; i < sizeof(UART_SendIOT_3response); i++)
+			{
+				UART_TxBuf[i] = UART_SendIOT_3response[i];
+			}
+			UART_TxBuf[79] = Name[0];
+			UART_TxBuf[80] = Name[1];
+			UART_TxBuf[92] = Value + 0x30;
+			fun_UARTSendData(sizeof(UART_SendIOT_3response),0);
+		}
+	}
+}
 
 
 
@@ -35,7 +83,8 @@ const unsigned char UART_SendIOT_2SendData[]  = "{\"method\": \"upload\",\"data\
 volatile bit gbv_UARTSendAT_Is_10s;
 volatile unsigned char AT_State;
 volatile unsigned char AT_State_Before;
-
+volatile char UpdateSensorName[2];
+volatile unsigned char UpdateSensorData;
 void V_fun_UART_RxData()
 {
 	if(UART_RXOffset == 4)
@@ -59,6 +108,68 @@ void V_fun_UART_RxData()
 			UART_RXOffset = 0;
 		}
 	}
+	if(UART_RXOffset == 5)
+	{
+		if(	(UART_RxBuf[0] == 'r'	) && 
+			(UART_RxBuf[1] == 'e'	) &&
+		   	(UART_RxBuf[2] == 'a'	) &&
+			(UART_RxBuf[3] == 'd'	) && 
+			(UART_RxBuf[4] == 'y'	) )
+		{
+			DrvUartFormat.flag.b.IsRX_ready = 1;
+			UART_RXOffset = 0;
+		}
+	}
+	if(UART_RXOffset == 6)//getAll--Sensors
+	{
+		if(	(UART_RxBuf[0] == 'g'	) && 
+			(UART_RxBuf[1] == 'e'	) &&
+		   	(UART_RxBuf[2] == 't'	) &&
+			(UART_RxBuf[3] == 'A'	) && 
+			(UART_RxBuf[4] == 'l'	) && 
+			(UART_RxBuf[5] == 'l'	) )
+		{
+			DrvUartFormat.flag.b.IsRX_getAllSensors = 1;
+			UART_RXOffset = 0;
+		}
+	}
+	if(UART_RXOffset == 7)//p1":"c1  
+	{
+		if(	(UART_RxBuf[0] == 'p'	) && 
+			(UART_RxBuf[1] == '1'	) &&
+		   	(UART_RxBuf[2] == '\"'	) )
+		{
+			UpdateSensorName[0] = UART_RxBuf[5];
+			UpdateSensorName[1] = UART_RxBuf[6];
+			if((UART_RxBuf[16] > '0') && (UART_RxBuf[16] < '9'))
+			{
+				UpdateSensorData = (UART_RxBuf[15]-'0') * 10 + (UART_RxBuf[16]-'0');
+			}
+			else
+			{
+				UpdateSensorData = UART_RxBuf[15]-'0';
+			}
+			UART_RXOffset = 0;
+		}
+	}
+	if(UART_RXOffset == 7)//p2":"0"
+	{
+		if(	(UART_RxBuf[0] == 'p'	) && 
+			(UART_RxBuf[1] == '2'	) &&
+		   	(UART_RxBuf[2] == '\"'	) )
+		{
+			DrvUartFormat.flag.b.IsRX_updateSensor = 1;
+			if((UART_RxBuf[6] > '0') && (UART_RxBuf[6] < '9'))
+			{
+				UpdateSensorData = (UART_RxBuf[5]-'0') * 10 + (UART_RxBuf[6]-'0');
+			}
+			else
+			{
+				UpdateSensorData = UART_RxBuf[5]-'0';
+			}
+			UART_RXOffset = 0;
+		}
+	}
 }
 void fun_ESP8266_StartAT()
 {
@@ -66,9 +177,14 @@ void fun_ESP8266_StartAT()
 }
 void V_fun_UART_SendAT()
 {
+	//外部IIC改變的熱點名稱，外部主機發送WIFI名稱與密碼
+	const unsigned char WIFI_Name[]  = "realme_X7_Pro";
+	const unsigned char WIFI_Seret[] = "12345678";
 	if(    gbv_UARTSendAT_Is_10s
 		|| (AT_State != AT_State_Before)
 		|| DrvUartFormat.flag.b.IsRX_OK
+		|| DrvUartFormat.flag.b.IsRX_ok
+		|| DrvUartFormat.flag.b.IsRX_ready
 		)
 	{
 		GCC_DELAY(2000);
@@ -123,18 +239,12 @@ void V_fun_UART_SendAT()
 				}
 				break;
 			case Send_4RST:
-				if(DrvUartFormat.flag.b.IsRX_OK)//ready 暫時不用
+				if(DrvUartFormat.flag.b.IsRX_ready)//
 				{
-					DrvUartFormat.flag.b.IsRX_OK = 0;
-					AT_State = Send_5CWJAP;
-				}
-				/*if(DrvUartFormat.flag.b.IsRX_ready)//ready 暫時不用
-				{
-					//DrvUartFormat.flag.b.IsRX_OK = 0;
 					DrvUartFormat.flag.b.IsRX_ready = 0;
 					AT_State = Send_5CWJAP;
-				}*/
-				else
+				}
+				else if(!DrvUartFormat.flag.b.IsRX_OK)//只有ready有效
 				{
 					for(i = 0; i < sizeof(UART_SendWiFi_4RST); i++)
 					{
@@ -156,27 +266,23 @@ void V_fun_UART_SendAT()
 						UART_TxBuf[i] = UART_SendWiFi_5CWJAP[i];
 					}
 					
-					//外部IIC改變的熱點名稱，外部主機發送WIFI名稱與密碼
-					/*volatile temp;
-					#define WIFI_Name_StartNum 	10
-					for(i = 0;i < sizeof(MasterSend_WIFI_Name); i++)
+					//設置WIFI名稱與密碼
+					for(i = 0; i < sizeof(WIFI_Name) - 1; i++)
 					{
-						UART_TxBuf[WIFI_Name_StartNum + i] = sizeofMasterSend_WIFI_NameSeret[i];
+						UART_TxBuf[10 + i] = WIFI_Name[i];
 					}
-					UART_TxBuf[i + 1] = '\"'	;
-					UART_TxBuf[i + 2] = ','	;
-					UART_TxBuf[i + 3] = '\"'	;
-					temp = i + 3;
-					for(i;i < sizeof(MasterSend_WIFI_Seret); i++)
+					UART_TxBuf[10 + i + 0] = '\"';
+					UART_TxBuf[10 + i + 1] = ',';
+					UART_TxBuf[10 + i + 2] = '\"';
+					for(i = 0; i < sizeof(WIFI_Seret)-1; i++)
 					{
-						UART_TxBuf[temp + i] = sizeofMasterSend_WIFI_NameSeret[i];
+						UART_TxBuf[10 + sizeof(WIFI_Name) + 2 + i] = WIFI_Seret[i];
 					}
-					UART_TxBuf[temp + i + 1] = '\"'	;
-					UART_TxBuf[temp + i + 2] = '\r'	;
-					UART_TxBuf[temp + i + 3] = '\n'	;
-					//AT+CWJAP=\"realme_X7_Pro\",\"12345678\"\r\n";*/
-					
-					fun_UARTSendData(sizeof(UART_SendWiFi_5CWJAP),0);
+					UART_TxBuf[10 + sizeof(WIFI_Name) + 2 + i + 0] = '\"';
+					UART_TxBuf[10 + sizeof(WIFI_Name) + 2 + i + 1] = '\r';
+					UART_TxBuf[10 + sizeof(WIFI_Name) + 2 + i + 2] = '\n';
+					//AT+CWJAP=\"realme_X7_Pro\",\"12345678\"\r\n";
+					fun_UARTSendData(10 + sizeof(WIFI_Name) + 2 + i + 2 + 2 ,0);
 				}
 				break;
 			case Send_6CIPMUX:
@@ -228,7 +334,7 @@ void V_fun_UART_SendAT()
 				if(DrvUartFormat.flag.b.IsRX_OK)//IsRX_tcpsendIsOK
 				{
 					DrvUartFormat.flag.b.IsRX_OK = 0;
-					AT_State = Send_Stop;
+					AT_State = Send_Data;
 				}
 				/*if(DrvUartFormat.flag.b.IsRX_tcpsendIsOK)//IsRX_tcpsendIsOK
 				{
@@ -271,11 +377,14 @@ void V_fun_UART_SendAT()
 			default:
 				break;
 		}
-		DrvUartFormat.flag.b.IsRX_OK = 0;
-			
-		DrvUartFormat.flag.b.IsRX_ready = 0;
-			
-		DrvUartFormat.flag.b.IsRX_tcpsendIsOK = 0;
+		if(DrvUartFormat.flag.b.IsRX_OK)
+			DrvUartFormat.flag.b.IsRX_OK = 0;
+		else 
+		if(DrvUartFormat.flag.b.IsRX_ready)
+			DrvUartFormat.flag.b.IsRX_ready = 0;
+		else
+		if(DrvUartFormat.flag.b.IsRX_tcpsendIsOK)
+			DrvUartFormat.flag.b.IsRX_tcpsendIsOK = 0;	
 		
 	}
 }
