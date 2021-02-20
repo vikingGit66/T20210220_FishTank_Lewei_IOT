@@ -69,6 +69,7 @@ DEFINE_ISR(UART_ISR, 0x02C)
 		if ( UART_TXOffset < UART_TXLength)
 		{
 			_txr_rxr = UART_TxBuf[UART_TXOffset];
+			UART_TXIsBusy = 1;
 		}
 		else
 		{

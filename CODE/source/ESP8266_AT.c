@@ -77,14 +77,22 @@ void fun_IOT_response(char *Name,unsigned char Value)
 	}
 }
 
+volatile bit KeyControl1Data;
+volatile bit KeyControl1DataLast;
+volatile bit KeyControl2Data;
+
+
+
 
 
 
 volatile bit gbv_UARTSendAT_Is_10s;
+volatile bit gbv_UARTSendData_Is_10s;
+volatile bit gbv_UARTSendData_Is_120s;
 volatile unsigned char AT_State;
 volatile unsigned char AT_State_Before;
-volatile char UpdateSensorName[2];
-volatile unsigned char UpdateSensorData;
+char UpdateSensorName[2];
+unsigned char UpdateSensorData;
 void V_fun_UART_RxData()
 {
 	if(UART_RXOffset == 4)
@@ -133,7 +141,7 @@ void V_fun_UART_RxData()
 			UART_RXOffset = 0;
 		}
 	}
-	if(UART_RXOffset == 7)//p1":"c1  
+	if(UART_RXOffset == 7)//p1":"J1  
 	{
 		if(	(UART_RxBuf[0] == 'p'	) && 
 			(UART_RxBuf[1] == '1'	) &&
@@ -141,14 +149,6 @@ void V_fun_UART_RxData()
 		{
 			UpdateSensorName[0] = UART_RxBuf[5];
 			UpdateSensorName[1] = UART_RxBuf[6];
-			if((UART_RxBuf[16] > '0') && (UART_RxBuf[16] < '9'))
-			{
-				UpdateSensorData = (UART_RxBuf[15]-'0') * 10 + (UART_RxBuf[16]-'0');
-			}
-			else
-			{
-				UpdateSensorData = UART_RxBuf[15]-'0';
-			}
 			UART_RXOffset = 0;
 		}
 	}
@@ -170,6 +170,7 @@ void V_fun_UART_RxData()
 			UART_RXOffset = 0;
 		}
 	}
+	
 }
 void fun_ESP8266_StartAT()
 {
@@ -356,7 +357,7 @@ void V_fun_UART_SendAT()
 						UART_TxBuf[i] = UART_SendWiFi_10Outsend[i];
 					}
 					fun_UARTSendData(sizeof(UART_SendWiFi_10Outsend),0);
-					
+					while(UART_TXIsBusy);
 					if(DrvUartFormat.flag.b.IsRX_OK)
 					{
 						DrvUartFormat.flag.b.IsRX_OK = 0;
@@ -369,6 +370,7 @@ void V_fun_UART_SendAT()
 							UART_TxBuf[i] = UART_SendWiFi_1AT[i];
 						}
 						fun_UARTSendData(sizeof(UART_SendWiFi_1AT),0);
+						while(UART_TXIsBusy);
 					}
 				break;
 			case Send_Stop:

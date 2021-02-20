@@ -30,11 +30,20 @@ DEFINE_ISR(TIMEBASE1_ISR, 0x020)
 {
     // User Code
     static unsigned char gu8v_10s_Temp;
+    static unsigned char gu8v_120s_Temp;
 	gu8v_10s_Temp ++;
+	gu8v_120s_Temp ++;
 	if(gu8v_10s_Temp == 10)
 	{
 		gu8v_10s_Temp = 0;
 		gbv_UARTSendAT_Is_10s = 1;
+		gbv_UARTSendData_Is_10s = 1;
 	}
+	if(gu8v_120s_Temp == 120)
+	{
+		gu8v_120s_Temp = 0;
+		gbv_UARTSendData_Is_120s = 1;
+	}
+	
 }
 

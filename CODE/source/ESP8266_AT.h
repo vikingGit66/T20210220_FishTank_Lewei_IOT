@@ -1,9 +1,16 @@
 #ifndef _ESP8266_AT_H_
 #define _ESP8266_AT_H_
 
+//#define KeyControl1 J1
+//#define KeyControl2 J2
+extern volatile bit KeyControl1Data;
+extern volatile bit KeyControl1DataLast;
+extern volatile bit KeyControl2Data;
+
+
 extern volatile unsigned char AT_State;
-extern volatile char UpdateSensorName[2];
-extern volatile unsigned char UpdateSensorData;
+extern char UpdateSensorName[2];
+extern unsigned char UpdateSensorData;
 
 typedef enum 
 {

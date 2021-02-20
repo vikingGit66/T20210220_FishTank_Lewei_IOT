@@ -26,6 +26,7 @@ static volatile unsigned char UART_RxBuf[UART_LENGTH_RX] __attribute__ ((at(0x1e
 
 extern struct DrvUartFormat_t DrvUartFormat;
 extern volatile unsigned char UART_RXOffset;
+extern volatile bit UART_TXIsBusy;
 //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ 共用函數 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 void Drv_UART_Init();     // 初始化
 void fun_UARTSendData(unsigned char Length,unsigned char Offset);

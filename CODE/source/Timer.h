@@ -4,8 +4,8 @@
 #define _TIMER_H_
 
 extern volatile bit gbv_UARTSendAT_Is_10s;
-
-
+extern volatile bit gbv_UARTSendData_Is_10s;
+extern volatile bit gbv_UARTSendData_Is_120s;
 #define TimeBase0_8ms_Init() { _tb02 = 0 ; _tb01 = 0; _tb00 = 0;}
 
 #define TimeBase1_1s_Init() { _tb11 = 1 ; _tb10 = 1;}//11-1s

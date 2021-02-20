@@ -1,0 +1,93 @@
+
+[2021-02-20 09:57:40.648]
+TX：AT+CWMODE=3
+
+[2021-02-20 09:57:40.747]
+RX：AT+CWMODE=3
+
+
+OK
+
+[2021-02-20 09:57:45.875]
+TX：AT+RST
+
+[2021-02-20 09:57:45.981]
+RX：AT+RST
+
+
+OK
+WIFI DISCONNECT
+
+[2021-02-20 09:57:46.107]
+RX：H!埲1GD??)!獿對厡尵H潓1D
+[2021-02-20 09:57:46.249]
+RX：l$]?<浒X褥郹`WG?
+Ai-Thinker Technology Co. Ltd.
+
+ready
+
+[2021-02-20 09:58:07.128]
+TX：AT+CWJAP="realme_X7_Pro","12345678"
+
+[2021-02-20 09:58:07.261]
+RX：AT+CWJAP="realme_X7_Pro","12345678"
+
+
+[2021-02-20 09:58:09.401]
+RX：WIFI CONNECTED
+
+[2021-02-20 09:58:12.230]
+RX：WIFI GOT IP
+
+OK
+
+[2021-02-20 09:58:14.385]
+TX：AT+CIPSTART="TCP","cgi.im.qq.com",80
+
+[2021-02-20 09:58:14.527]
+RX：AT+CIPSTART="TCP","cgi.im.qq.com",80
+
+
+[2021-02-20 09:58:15.342]
+RX：CONNECT
+
+OK
+
+[2021-02-20 09:58:22.528]
+TX：AT+CIPSEND=36
+
+[2021-02-20 09:58:22.635]
+RX：AT+CIPSEND=36
+
+
+OK
+> 
+[2021-02-20 09:58:27.492]
+TX：://cgi.im.qq.com/cgi-bin/cgi_svrtime
+
+[2021-02-20 09:58:27.621]
+RX：
+
+busy s...
+
+Recv 36 bytes
+
+[2021-02-20 09:58:28.064]
+RX：
+SEND OK
+
++IPD,341:HTTP/1.1 400 Bad Request
+Server: stgw/1.3.12.4_1.13.5
+Date: Sat, 20 Feb 2021 01:58:27 GMT
+Content-Type: text/html
+Content-Length: 181
+Connection: close
+
+<html>
+<head><title>400 Bad Request</title></head>
+<body bgcolor="white">
+<center><h1>400 Bad Request</h1></center>
+<hr><center>stgw/1.3.12.4_1.13.5</center>
+</body>
+</html>
+CLOSED
